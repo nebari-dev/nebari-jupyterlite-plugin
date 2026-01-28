@@ -13,6 +13,13 @@ apt-get update && apt-get install -y --no-install-recommends git ca-certificates
 echo "Cloning ${CONTENT_REPO} (branch: ${CONTENT_BRANCH})..."
 git clone --depth 1 --branch "${CONTENT_BRANCH}" "${CONTENT_REPO}" /tmp/content
 
+# Create requirements.txt from JUPYTERLITE_PACKAGES env var if set
+if [ -n "${JUPYTERLITE_PACKAGES}" ] && [ "${JUPYTERLITE_PACKAGES}" != "[]" ]; then
+    echo "Creating requirements.txt from packages config..."
+    echo "${JUPYTERLITE_PACKAGES}" | python3 -c "import sys, json; print('\n'.join(json.load(sys.stdin)))" > /tmp/content/requirements.txt
+    cat /tmp/content/requirements.txt
+fi
+
 # Copy config to writable directory (ConfigMap is read-only)
 echo "Setting up build environment..."
 mkdir -p /tmp/build

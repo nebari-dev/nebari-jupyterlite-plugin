@@ -37,6 +37,12 @@ variable "content-branch" {
   default     = "main"
 }
 
+variable "packages" {
+  type        = string
+  default     = "[]"
+  description = "JSON-encoded list of Python packages to pre-install"
+}
+
 variable "overrides" {
   type        = string
   default     = "{}"

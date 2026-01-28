@@ -32,6 +32,7 @@ jupyterlite:
 | `auth_enabled` | bool | `true` | Whether to require Nebari authentication |
 | `content_repo` | string | `""` | Git repository URL for custom notebooks/files |
 | `content_branch` | string | `"main"` | Git branch to use for content repository |
+| `packages` | list | `[]` | Python packages to pre-install (e.g., `["numpy", "pandas"]`) |
 | `overrides` | dict | `{}` | Override Kubernetes resource settings |
 
 ### Custom Content
@@ -43,9 +44,13 @@ jupyterlite:
   enabled: true
   content_repo: "https://github.com/your-org/notebooks"
   content_branch: "main"
+  packages:
+    - numpy
+    - pandas
+    - matplotlib
 ```
 
-The content repository is cloned at pod startup and built into JupyterLite using `jupyter lite build`. Files will appear in the JupyterLite file browser.
+The content repository is cloned at pod startup and built into JupyterLite using `jupyter lite build`. Files will appear in the JupyterLite file browser. Packages listed in `packages` will be pre-installed and available to import.
 
 ### Overrides
 
