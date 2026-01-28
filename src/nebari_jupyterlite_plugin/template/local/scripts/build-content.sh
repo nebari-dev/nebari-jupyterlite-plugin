@@ -8,17 +8,10 @@ CONTENT_BRANCH="${2:?Usage: $0 <repo_url> <branch> <output_dir> <config_dir>}"
 OUTPUT_DIR="${3:?Usage: $0 <repo_url> <branch> <output_dir> <config_dir>}"
 CONFIG_DIR="${4:-/build}"
 
-apt update && apt install -y --no-install-recommends git ca-certificates jq
+apt update && apt install -y --no-install-recommends git ca-certificates
 
 echo "Cloning ${CONTENT_REPO} (branch: ${CONTENT_BRANCH})..."
 git clone --depth 1 --branch "${CONTENT_BRANCH}" "${CONTENT_REPO}" /tmp/content
-
-# Create requirements.txt from JUPYTERLITE_PACKAGES env var if set
-if [ -n "${JUPYTERLITE_PACKAGES}" ] && [ "${JUPYTERLITE_PACKAGES}" != "[]" ]; then
-    echo "Creating requirements.txt from packages config..."
-    echo "${JUPYTERLITE_PACKAGES}" | jq -r '.[]' > /tmp/content/requirements.txt
-    cat /tmp/content/requirements.txt
-fi
 
 # Copy config to writable directory (ConfigMap is read-only)
 echo "Setting up build environment..."
@@ -34,6 +27,7 @@ echo "Building JupyterLite with content..."
 # This causes: ValueError: invalid literal for int() with base 10: 'tcp://...'
 # Fix: unset the conflicting env var before building
 unset JUPYTERLITE_PORT
+
 pixi run jupyter lite build --contents /tmp/content --output-dir "${OUTPUT_DIR}/site"
 
 echo "Content built successfully."

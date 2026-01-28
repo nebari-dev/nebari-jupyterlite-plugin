@@ -36,7 +36,6 @@ jupyterlite:
 | `auth_enabled` | bool | `true` | Whether to require Nebari authentication |
 | `content_repo` | string | `""` | Git repository URL for custom notebooks/files |
 | `content_branch` | string | `"main"` | Git branch to use for content repository |
-| `packages` | list | `[]` | Python packages to pre-install (e.g., `["numpy", "pandas"]`) |
 | `overrides` | dict | `{}` | Override Kubernetes resource settings |
 
 ### Custom Content
@@ -48,13 +47,28 @@ jupyterlite:
   enabled: true
   content_repo: "https://github.com/your-org/notebooks"
   content_branch: "main"
-  packages:
-    - numpy
-    - pandas
-    - matplotlib
 ```
 
-The content repository is cloned at pod startup and built into JupyterLite using `jupyter lite build`. Files will appear in the JupyterLite file browser. Packages listed in `packages` will be pre-installed and available to import.
+The content repository is cloned at pod startup and built into JupyterLite using `jupyter lite build`. Files will appear in the JupyterLite file browser.
+
+### Installing Packages
+
+JupyterLite uses [Pyodide](https://pyodide.org/) to run Python in the browser. Packages can be installed in two ways:
+
+1. **Pyodide packages** (numpy, pandas, sympy, xarray, etc.) - Available immediately, just `import` them
+2. **Other PyPI packages** - Install at runtime with `%pip install <package>`
+
+```python
+# Pyodide packages - just import
+import numpy as np
+import pandas as pd
+
+# Other packages - install first
+%pip install pyfiglet
+import pyfiglet
+```
+
+See the [list of packages in Pyodide](https://pyodide.org/en/stable/usage/packages-in-pyodide.html) and the [JupyterLite packages documentation](https://jupyterlite.readthedocs.io/en/latest/howto/pyodide/packages.html) for more details.
 
 ### Overrides
 

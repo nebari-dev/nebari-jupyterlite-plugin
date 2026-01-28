@@ -19,7 +19,6 @@ class JupyterLiteInputSchema(Base):
     auth_enabled: bool = True
     content_repo: str = ""
     content_branch: str = "main"
-    packages: list[str] = []
     overrides: dict[str, Any] | None = {}
 
 
@@ -77,7 +76,6 @@ class JupyterLiteStage(NebariTerraformStage):
             "forwardauth-middleware-name": forwardauth_middleware_name,
             "content-repo": self.config.jupyterlite.content_repo,
             "content-branch": self.config.jupyterlite.content_branch,
-            "packages": json.dumps(self.config.jupyterlite.packages),
             "overrides": json.dumps(self.config.jupyterlite.overrides),
         }
 

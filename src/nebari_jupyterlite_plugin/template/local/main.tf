@@ -43,11 +43,6 @@ resource "kubernetes_deployment" "jupyterlite" {
             command = ["/bin/sh", "/scripts/build-content.sh"]
             args    = ["${var.content-repo}", "${var.content-branch}", "/output", "/build"]
 
-            env {
-              name  = "JUPYTERLITE_PACKAGES"
-              value = var.packages
-            }
-
             volume_mount {
               name       = "content-output"
               mount_path = "/output"
