@@ -33,24 +33,28 @@ resource "kubernetes_deployment" "jupyterlite" {
       }
 
       spec {
-        # Init container to clone repo and generate index (only if content_repo is set)
+        # Init container to clone repo and build JupyterLite content (only if content_repo is set)
         dynamic "init_container" {
           for_each = local.has_content_repo ? [1] : []
           content {
-            name  = "content-loader"
-            image = "python:3.12-alpine"
+            name  = "content-builder"
+            image = "ghcr.io/prefix-dev/pixi:latest"
 
             command = ["/bin/sh", "-c"]
             args = [<<-EOT
               set -e
-              apk add --no-cache git
+              apt-get update && apt-get install -y --no-install-recommends git
+
               echo "Cloning ${var.content-repo} (branch: ${var.content-branch})..."
               git clone --depth 1 --branch ${var.content-branch} ${var.content-repo} /tmp/content
 
-              echo "Generating content index..."
-              python3 /scripts/generate_index.py /tmp/content /output
+              echo "Installing dependencies from lock file..."
+              cd /build && pixi install --frozen
 
-              echo "Content loaded successfully."
+              echo "Building JupyterLite with content..."
+              pixi run jupyter lite build --contents /tmp/content --output-dir /output
+
+              echo "Content built successfully."
             EOT
             ]
 
@@ -60,8 +64,8 @@ resource "kubernetes_deployment" "jupyterlite" {
             }
 
             volume_mount {
-              name       = "scripts"
-              mount_path = "/scripts"
+              name       = "build-config"
+              mount_path = "/build"
             }
           }
         }
@@ -74,22 +78,12 @@ resource "kubernetes_deployment" "jupyterlite" {
             container_port = 8000
           }
 
-          # Mount content output if content_repo is set
+          # Mount built JupyterLite output if content_repo is set
           dynamic "volume_mount" {
             for_each = local.has_content_repo ? [1] : []
             content {
               name       = "content-output"
-              mount_path = "/usr/share/nginx/html/files"
-              sub_path   = "files"
-            }
-          }
-
-          dynamic "volume_mount" {
-            for_each = local.has_content_repo ? [1] : []
-            content {
-              name       = "content-output"
-              mount_path = "/usr/share/nginx/html/api/contents/all.json"
-              sub_path   = "api/contents/all.json"
+              mount_path = "/usr/share/nginx/html"
             }
           }
 
@@ -135,9 +129,9 @@ resource "kubernetes_deployment" "jupyterlite" {
         dynamic "volume" {
           for_each = local.has_content_repo ? [1] : []
           content {
-            name = "scripts"
+            name = "build-config"
             config_map {
-              name = kubernetes_config_map.generate_index_script[0].metadata[0].name
+              name = kubernetes_config_map.build_config[0].metadata[0].name
             }
           }
         }
@@ -146,17 +140,18 @@ resource "kubernetes_deployment" "jupyterlite" {
   }
 }
 
-# ConfigMap for generate_index.py script
-resource "kubernetes_config_map" "generate_index_script" {
+# ConfigMap for pixi build configuration
+resource "kubernetes_config_map" "build_config" {
   count = var.enabled && local.has_content_repo ? 1 : 0
 
   metadata {
-    name      = "jupyterlite-scripts"
+    name      = "jupyterlite-build-config"
     namespace = var.namespace
   }
 
   data = {
-    "generate_index.py" = file("${path.module}/scripts/generate_index.py")
+    "pixi.toml" = file("${path.module}/build-config/pixi.toml")
+    "pixi.lock" = file("${path.module}/build-config/pixi.lock")
   }
 }
 
