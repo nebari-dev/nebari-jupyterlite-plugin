@@ -45,6 +45,7 @@ fallback-version = "0.0.1"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/nebari_jupyterlite_plugin"]
+artifacts = ["src/nebari_jupyterlite_plugin/template/**/*"]
 
 [tool.ruff]
 target-version = "py310"

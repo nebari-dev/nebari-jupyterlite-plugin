@@ -1222,8 +1222,8 @@ packages:
   requires_python: '>=3.10'
 - pypi: ./
   name: nebari-jupyterlite-plugin
-  version: 0.0.2.dev2+g20d8753df.d20260128
-  sha256: f4dbe448274489c99c5537aae35638216c167e10e088a01feb0ba82900031c88
+  version: 0.0.2.dev5+g1ba988143.d20260128
+  sha256: 65020cb51592d61247e588ad7d9de45e2d03c083805fda3ed63d6ac6a3d8b5b7
   requires_dist:
   - nebari>=2025.1.1
   requires_python: '>=3.10'

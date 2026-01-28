@@ -31,7 +31,8 @@ class JupyterLiteStage(NebariTerraformStage):
 
     @property
     def template_directory(self):
-        return Path(inspect.getfile(self.__class__)).parent / "template" / self.config.provider.value
+        # JupyterLite uses the same template for all providers (static web app)
+        return Path(inspect.getfile(self.__class__)).parent / "template" / "local"
 
     def check(self, stage_outputs: dict[str, dict[str, Any]], disable_prompt=False) -> bool:
         # JupyterLite is a static web app, so it works on all providers
