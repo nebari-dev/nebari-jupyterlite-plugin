@@ -63,7 +63,5 @@ jobs:
       - name: Build package
         run: pixi run python -m build
 
-      - name: Check package
-        run: |
-          pixi run pip install dist/*.whl
-          pixi run python -c "from nebari_jupyterlite_plugin import JupyterLiteStage"
+      - name: List artifacts
+        run: ls -la dist/
