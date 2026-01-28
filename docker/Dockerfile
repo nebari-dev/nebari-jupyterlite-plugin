@@ -9,7 +9,7 @@ COPY pixi.toml .
 # Install dependencies and build JupyterLite
 RUN pixi install && pixi run build
 
-# Production stage - serve with nginx
+# Production stage - nginx only (content indexing handled by init container)
 FROM nginx:alpine
 
 # Copy built JupyterLite files

@@ -63,6 +63,9 @@ venv.bak/
 .pixi/*
 !.pixi/config.toml
 
+# JupyterLite build cache
+.jupyterlite.doit.db
+
 # Spyder project settings
 .spyderproject
 .spyproject

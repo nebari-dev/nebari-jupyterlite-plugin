@@ -17,6 +17,8 @@ except ImportError:
 class JupyterLiteInputSchema(Base):
     enabled: bool = True
     auth_enabled: bool = True
+    content_repo: str = ""
+    content_branch: str = "main"
     overrides: dict[str, Any] | None = {}
 
 
@@ -72,6 +74,8 @@ class JupyterLiteStage(NebariTerraformStage):
             "external_url": external_url,
             "auth-enabled": self.config.jupyterlite.auth_enabled,
             "forwardauth-middleware-name": forwardauth_middleware_name,
+            "content-repo": self.config.jupyterlite.content_repo,
+            "content-branch": self.config.jupyterlite.content_branch,
             "overrides": json.dumps(self.config.jupyterlite.overrides),
         }
 

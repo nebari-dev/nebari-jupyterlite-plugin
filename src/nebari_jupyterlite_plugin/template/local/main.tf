@@ -1,6 +1,7 @@
 locals {
   jupyterlite-prefix = "jupyterlite"
   overrides          = jsondecode(var.overrides)
+  has_content_repo   = var.content-repo != ""
 }
 
 # Deployment ===================================================================
@@ -32,12 +33,59 @@ resource "kubernetes_deployment" "jupyterlite" {
       }
 
       spec {
+        # Init container to clone repo and build JupyterLite content (only if content_repo is set)
+        dynamic "init_container" {
+          for_each = local.has_content_repo ? [1] : []
+          content {
+            name  = "content-builder"
+            image = "ghcr.io/prefix-dev/pixi:latest"
+
+            command = ["/bin/sh", "-c"]
+            args = [<<-EOT
+              set -e
+              apt-get update && apt-get install -y --no-install-recommends git
+
+              echo "Cloning ${var.content-repo} (branch: ${var.content-branch})..."
+              git clone --depth 1 --branch ${var.content-branch} ${var.content-repo} /tmp/content
+
+              echo "Installing dependencies from lock file..."
+              cd /build && pixi install --frozen
+
+              echo "Building JupyterLite with content..."
+              pixi run jupyter lite build --contents /tmp/content --output-dir /output/site
+
+              echo "Content built successfully."
+            EOT
+            ]
+
+            volume_mount {
+              name       = "content-output"
+              mount_path = "/output"
+            }
+
+            volume_mount {
+              name       = "build-config"
+              mount_path = "/build"
+            }
+          }
+        }
+
         container {
           name  = "jupyterlite"
           image = lookup(local.overrides, "image", "quay.io/nebari/nebari-jupyterlite-plugin:latest")
 
           port {
             container_port = 8000
+          }
+
+          # Mount built JupyterLite output if content_repo is set
+          dynamic "volume_mount" {
+            for_each = local.has_content_repo ? [1] : []
+            content {
+              name       = "content-output"
+              mount_path = "/usr/share/nginx/html"
+              sub_path   = "site"
+            }
           }
 
           resources {
@@ -69,8 +117,42 @@ resource "kubernetes_deployment" "jupyterlite" {
             period_seconds        = 10
           }
         }
+
+        # Volumes
+        dynamic "volume" {
+          for_each = local.has_content_repo ? [1] : []
+          content {
+            name = "content-output"
+            empty_dir {}
+          }
+        }
+
+        dynamic "volume" {
+          for_each = local.has_content_repo ? [1] : []
+          content {
+            name = "build-config"
+            config_map {
+              name = kubernetes_config_map.build_config[0].metadata[0].name
+            }
+          }
+        }
       }
     }
+  }
+}
+
+# ConfigMap for pixi build configuration
+resource "kubernetes_config_map" "build_config" {
+  count = var.enabled && local.has_content_repo ? 1 : 0
+
+  metadata {
+    name      = "jupyterlite-build-config"
+    namespace = var.namespace
+  }
+
+  data = {
+    "pixi.toml" = file("${path.module}/build-config/pixi.toml")
+    "pixi.lock" = file("${path.module}/build-config/pixi.lock")
   }
 }
 
