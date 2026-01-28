@@ -9,13 +9,14 @@ A Nebari plugin that deploys [JupyterLite](https://jupyterlite.readthedocs.io/) 
 ## Installation
 
 ```bash
-pip install nebari-jupyterlite-plugin
+pip install git+https://github.com/nebari-dev/nebari-jupyterlite-plugin.git
 ```
 
 Or for development:
 
 ```bash
-pip install -e /path/to/nebari-jupyterlite-plugin
+git clone https://github.com/nebari-dev/nebari-jupyterlite-plugin.git
+pip install -e nebari-jupyterlite-plugin
 ```
 
 ## Configuration
