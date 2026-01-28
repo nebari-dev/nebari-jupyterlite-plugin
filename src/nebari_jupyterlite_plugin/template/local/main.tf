@@ -40,23 +40,8 @@ resource "kubernetes_deployment" "jupyterlite" {
             name  = "content-builder"
             image = "ghcr.io/prefix-dev/pixi:latest"
 
-            command = ["/bin/sh", "-c"]
-            args = [<<-EOT
-              set -e
-              apt-get update && apt-get install -y --no-install-recommends git ca-certificates
-
-              echo "Cloning ${var.content-repo} (branch: ${var.content-branch})..."
-              git clone --depth 1 --branch ${var.content-branch} ${var.content-repo} /tmp/content
-
-              echo "Installing dependencies from lock file..."
-              cd /build && pixi install --frozen
-
-              echo "Building JupyterLite with content..."
-              pixi run jupyter lite build --contents /tmp/content --output-dir /output/site
-
-              echo "Content built successfully."
-            EOT
-            ]
+            command = ["/bin/sh", "/scripts/build-content.sh"]
+            args    = ["${var.content-repo}", "${var.content-branch}", "/output", "/build"]
 
             volume_mount {
               name       = "content-output"
@@ -66,6 +51,11 @@ resource "kubernetes_deployment" "jupyterlite" {
             volume_mount {
               name       = "build-config"
               mount_path = "/build"
+            }
+
+            volume_mount {
+              name       = "scripts"
+              mount_path = "/scripts"
             }
           }
         }
@@ -136,8 +126,33 @@ resource "kubernetes_deployment" "jupyterlite" {
             }
           }
         }
+
+        dynamic "volume" {
+          for_each = local.has_content_repo ? [1] : []
+          content {
+            name = "scripts"
+            config_map {
+              name         = kubernetes_config_map.scripts[0].metadata[0].name
+              default_mode = "0755"
+            }
+          }
+        }
       }
     }
+  }
+}
+
+# ConfigMap for build script
+resource "kubernetes_config_map" "scripts" {
+  count = var.enabled && local.has_content_repo ? 1 : 0
+
+  metadata {
+    name      = "jupyterlite-scripts"
+    namespace = var.namespace
+  }
+
+  data = {
+    "build-content.sh" = file("${path.module}/scripts/build-content.sh")
   }
 }
 
