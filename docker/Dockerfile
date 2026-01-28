@@ -1,16 +1,13 @@
 # Build stage - create JupyterLite static files
-FROM python:3.12-slim AS builder
+FROM ghcr.io/prefix-dev/pixi:latest AS builder
 
 WORKDIR /build
 
-# Install jupyterlite and common kernels
-RUN pip install --no-cache-dir \
-    jupyterlite-core \
-    jupyterlite-pyodide-kernel \
-    jupyterlab
+# Copy pixi config
+COPY pixi.toml .
 
-# Build JupyterLite
-RUN jupyter lite build --output-dir /build/output
+# Install dependencies and build JupyterLite
+RUN pixi install && pixi run build
 
 # Production stage - serve with nginx
 FROM nginx:alpine
