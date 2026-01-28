@@ -25,6 +25,18 @@ variable "forwardauth-middleware-name" {
   default     = ""
 }
 
+variable "content-repo" {
+  type        = string
+  description = "Git repository URL for JupyterLite content (notebooks, files)"
+  default     = ""
+}
+
+variable "content-branch" {
+  type        = string
+  description = "Git branch for content repository"
+  default     = "main"
+}
+
 variable "overrides" {
   type        = string
   default     = "{}"

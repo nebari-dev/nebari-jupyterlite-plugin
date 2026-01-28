@@ -1,6 +1,7 @@
 locals {
   jupyterlite-prefix = "jupyterlite"
   overrides          = jsondecode(var.overrides)
+  has_content_repo   = var.content-repo != ""
 }
 
 # Deployment ===================================================================
@@ -32,12 +33,64 @@ resource "kubernetes_deployment" "jupyterlite" {
       }
 
       spec {
+        # Init container to clone repo and generate index (only if content_repo is set)
+        dynamic "init_container" {
+          for_each = local.has_content_repo ? [1] : []
+          content {
+            name  = "content-loader"
+            image = "python:3.12-alpine"
+
+            command = ["/bin/sh", "-c"]
+            args = [<<-EOT
+              set -e
+              apk add --no-cache git
+              echo "Cloning ${var.content-repo} (branch: ${var.content-branch})..."
+              git clone --depth 1 --branch ${var.content-branch} ${var.content-repo} /tmp/content
+
+              echo "Generating content index..."
+              python3 /scripts/generate_index.py /tmp/content /output
+
+              echo "Content loaded successfully."
+            EOT
+            ]
+
+            volume_mount {
+              name       = "content-output"
+              mount_path = "/output"
+            }
+
+            volume_mount {
+              name       = "scripts"
+              mount_path = "/scripts"
+            }
+          }
+        }
+
         container {
           name  = "jupyterlite"
           image = lookup(local.overrides, "image", "quay.io/nebari/nebari-jupyterlite-plugin:latest")
 
           port {
             container_port = 8000
+          }
+
+          # Mount content output if content_repo is set
+          dynamic "volume_mount" {
+            for_each = local.has_content_repo ? [1] : []
+            content {
+              name       = "content-output"
+              mount_path = "/usr/share/nginx/html/files"
+              sub_path   = "files"
+            }
+          }
+
+          dynamic "volume_mount" {
+            for_each = local.has_content_repo ? [1] : []
+            content {
+              name       = "content-output"
+              mount_path = "/usr/share/nginx/html/api/contents/all.json"
+              sub_path   = "api/contents/all.json"
+            }
           }
 
           resources {
@@ -69,8 +122,41 @@ resource "kubernetes_deployment" "jupyterlite" {
             period_seconds        = 10
           }
         }
+
+        # Volumes
+        dynamic "volume" {
+          for_each = local.has_content_repo ? [1] : []
+          content {
+            name = "content-output"
+            empty_dir {}
+          }
+        }
+
+        dynamic "volume" {
+          for_each = local.has_content_repo ? [1] : []
+          content {
+            name = "scripts"
+            config_map {
+              name = kubernetes_config_map.generate_index_script[0].metadata[0].name
+            }
+          }
+        }
       }
     }
+  }
+}
+
+# ConfigMap for generate_index.py script
+resource "kubernetes_config_map" "generate_index_script" {
+  count = var.enabled && local.has_content_repo ? 1 : 0
+
+  metadata {
+    name      = "jupyterlite-scripts"
+    namespace = var.namespace
+  }
+
+  data = {
+    "generate_index.py" = file("${path.module}/scripts/generate_index.py")
   }
 }
 
