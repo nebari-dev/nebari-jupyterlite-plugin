@@ -52,7 +52,7 @@ resource "kubernetes_deployment" "jupyterlite" {
               cd /build && pixi install --frozen
 
               echo "Building JupyterLite with content..."
-              pixi run jupyter lite build --contents /tmp/content --output-dir /output
+              pixi run jupyter lite build --contents /tmp/content --output-dir /output/site
 
               echo "Content built successfully."
             EOT
@@ -84,6 +84,7 @@ resource "kubernetes_deployment" "jupyterlite" {
             content {
               name       = "content-output"
               mount_path = "/usr/share/nginx/html"
+              sub_path   = "site"
             }
           }
 
