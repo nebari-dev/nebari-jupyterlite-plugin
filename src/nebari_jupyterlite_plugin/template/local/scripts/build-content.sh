@@ -22,6 +22,11 @@ echo "Installing dependencies from lock file..."
 cd /tmp/build && pixi install --frozen
 
 echo "Building JupyterLite with content..."
+# Kubernetes automatically creates env vars for services: JUPYTERLITE_PORT=tcp://IP:PORT
+# But jupyterlite-core reads JUPYTERLITE_PORT expecting an integer port number
+# This causes: ValueError: invalid literal for int() with base 10: 'tcp://...'
+# Fix: unset the conflicting env var before building
+unset JUPYTERLITE_PORT
 pixi run jupyter lite build --contents /tmp/content --output-dir "${OUTPUT_DIR}/site"
 
 echo "Content built successfully."
