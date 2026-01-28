@@ -8,7 +8,7 @@ CONTENT_BRANCH="${2:?Usage: $0 <repo_url> <branch> <output_dir> <config_dir>}"
 OUTPUT_DIR="${3:?Usage: $0 <repo_url> <branch> <output_dir> <config_dir>}"
 CONFIG_DIR="${4:-/build}"
 
-apt-get update && apt-get install -y --no-install-recommends git ca-certificates
+apt update && apt install -y --no-install-recommends git ca-certificates jq
 
 echo "Cloning ${CONTENT_REPO} (branch: ${CONTENT_BRANCH})..."
 git clone --depth 1 --branch "${CONTENT_BRANCH}" "${CONTENT_REPO}" /tmp/content
@@ -16,7 +16,7 @@ git clone --depth 1 --branch "${CONTENT_BRANCH}" "${CONTENT_REPO}" /tmp/content
 # Create requirements.txt from JUPYTERLITE_PACKAGES env var if set
 if [ -n "${JUPYTERLITE_PACKAGES}" ] && [ "${JUPYTERLITE_PACKAGES}" != "[]" ]; then
     echo "Creating requirements.txt from packages config..."
-    echo "${JUPYTERLITE_PACKAGES}" | python3 -c "import sys, json; print('\n'.join(json.load(sys.stdin)))" > /tmp/content/requirements.txt
+    echo "${JUPYTERLITE_PACKAGES}" | jq -r '.[]' > /tmp/content/requirements.txt
     cat /tmp/content/requirements.txt
 fi
 
