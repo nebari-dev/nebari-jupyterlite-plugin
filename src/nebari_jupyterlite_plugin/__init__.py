@@ -47,8 +47,10 @@ class JupyterLiteStage(NebariTerraformStage):
             try:
                 _ = stage_outputs["stages/07-kubernetes-services"]["forward-auth-middleware"]["value"]["name"]
             except KeyError:
-                print("\nPrerequisite stage output not found: forward-auth-middleware. "
-                      "Set auth_enabled: false to disable authentication.")
+                print(
+                    "\nPrerequisite stage output not found: forward-auth-middleware. "
+                    "Set auth_enabled: false to disable authentication."
+                )
                 return False
 
         return True
