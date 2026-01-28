@@ -43,7 +43,7 @@ resource "kubernetes_deployment" "jupyterlite" {
             command = ["/bin/sh", "-c"]
             args = [<<-EOT
               set -e
-              apt-get update && apt-get install -y --no-install-recommends git
+              apt-get update && apt-get install -y --no-install-recommends git ca-certificates
 
               echo "Cloning ${var.content-repo} (branch: ${var.content-branch})..."
               git clone --depth 1 --branch ${var.content-branch} ${var.content-repo} /tmp/content
