@@ -5,7 +5,7 @@ from typing import Any
 
 from _nebari.stages.base import NebariTerraformStage
 from nebari.hookspecs import NebariStage, hookimpl
-from nebari.schema import Base, ProviderEnum
+from nebari.schema import Base
 from pydantic import Field
 
 try:
