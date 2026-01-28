@@ -34,7 +34,7 @@ resource "kubernetes_deployment" "jupyterlite" {
       spec {
         container {
           name  = "jupyterlite"
-          image = lookup(local.overrides, "image", "quay.io/nebari/jupyterlite:latest")
+          image = lookup(local.overrides, "image", "quay.io/nebari/nebari-jupyterlite-plugin:latest")
 
           port {
             container_port = 8000

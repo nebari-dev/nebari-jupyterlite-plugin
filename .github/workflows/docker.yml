@@ -39,7 +39,7 @@ jobs:
         with:
           images: |
             ghcr.io/${{ github.repository }}
-            quay.io/nebari/jupyterlite
+            quay.io/nebari/nebari-jupyterlite-plugin
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,prefix=
