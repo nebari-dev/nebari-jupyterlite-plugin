@@ -1,0 +1,75 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nebari-jupyterlite-plugin"
+dynamic = ["version"]
+description = "JupyterLite Plugin for Nebari Platform"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+keywords = ["nebari", "jupyterlite", "jupyter"]
+authors = [
+  { name = "Nebari Development Team" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: Implementation :: CPython",
+]
+dependencies = [
+  "nebari>=2025.1.1",
+]
+
+[dependency-groups]
+dev = [
+  "coverage[toml]>=6.5",
+  "pytest",
+  "ruff>=0.0.243",
+]
+
+[project.urls]
+Documentation = "https://github.com/nebari-dev/nebari-jupyterlite-plugin#readme"
+Issues = "https://github.com/nebari-dev/nebari-jupyterlite-plugin/issues"
+Source = "https://github.com/nebari-dev/nebari-jupyterlite-plugin"
+
+[tool.hatch.version]
+source = "vcs"
+fallback-version = "0.0.1"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nebari_jupyterlite_plugin"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["I", "E", "F", "W"]
+ignore = [
+  "S105", "S106", "S107",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["nebari_jupyterlite_plugin"]
+
+[project.entry-points.nebari]
+nebari-jupyterlite-plugin = "nebari_jupyterlite_plugin"
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["osx-arm64"]
+
+[tool.pixi.pypi-dependencies]
+nebari-jupyterlite-plugin = { path = ".", editable = true }
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }
+
+[tool.pixi.tasks]
