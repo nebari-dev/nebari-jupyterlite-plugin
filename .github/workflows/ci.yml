@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Ruff check
+        uses: astral-sh/ruff-action@57714a7c8a2e59f32539362ba31877a1957dded1 # v3.5.1
+        with:
+          args: check
+
+      - name: Ruff format check
+        uses: astral-sh/ruff-action@57714a7c8a2e59f32539362ba31877a1957dded1 # v3.5.1
+        with:
+          args: format --check
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@a0af7a228712d6121d37aba47adf55c1332c9c2e # v0.9.4
+        with:
+          cache: true
+
+      - name: Test import
+        run: |
+          pixi run python -c "from nebari_jupyterlite_plugin import JupyterLiteStage, nebari_stage"
+          pixi run python -c "from nebari_jupyterlite_plugin import JupyterLiteStage; assert JupyterLiteStage.name == 'jupyterlite'"
+          pixi run python -c "from nebari_jupyterlite_plugin import JupyterLiteStage; assert JupyterLiteStage.priority == 90"
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@a0af7a228712d6121d37aba47adf55c1332c9c2e # v0.9.4
+        with:
+          cache: true
+
+      - name: Build package
+        run: pixi run python -m build
+
+      - name: Check package
+        run: |
+          pixi run pip install dist/*.whl
+          pixi run python -c "from nebari_jupyterlite_plugin import JupyterLiteStage"
